@@ -7,11 +7,20 @@
 }
 
 /*
- * Design tokens de color extraídos del MCP de Figma (frame hero-section,
- * node-id 1:3). Agregar aquí los tokens de nuevas secciones tal cual los
- * devuelve el MCP — no aproximar valores.
+ * Breakpoint propio para el layout "fiel a Figma" (fluido vía clamp()).
+ * Por debajo de 1366px se usa un layout propio (mobile/tablet, sin mockup).
  */
 @theme {
+  --breakpoint-desktop: 1366px;
+}
+
+/*
+ * Design tokens de color extraídos del MCP de Figma. Agregar aquí los
+ * tokens de nuevas secciones tal cual los devuelve el MCP — no aproximar
+ * valores.
+ */
+@theme {
+  /* hero-section (node-id 1:3) */
   --color-cream: #f5e3cd;
   --color-ink: #0f1024;
   --color-gold: #f2d34f;
@@ -19,6 +28,12 @@
   --color-white-80: rgba(255, 255, 255, 0.8);
   --color-white-40: rgba(255, 255, 255, 0.4);
   --color-white-15: rgba(255, 255, 255, 0.15);
+
+  /* acerca-sec / Distintivos (node-id 1:39) */
+  --color-sage: #b7c0b7;
+  --color-sand: #f7e7cc;
+  --color-forest: #1d221c;
+  --color-panel: #f0f0f0;
 }
 
 body {

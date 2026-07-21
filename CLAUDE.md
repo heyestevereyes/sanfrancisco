@@ -13,6 +13,39 @@ Landing page de un desarrollo inmobiliario llamado "San Francisco". Next.js
    `get_metadata`). Nunca aproximar ni inventar estilos — si un valor no
    viene del MCP, hay que pedirlo o volver a consultarlo, no adivinarlo.
 
+   - **Estrategia responsive (desktop fluido):** el Figma solo tiene
+     mockup para el frame de 1920px, pero el sitio debe verse bien y
+     escalar de forma continua en cualquier ancho de escritorio (1366px,
+     1536px, 1920px, 2560px...), no solo lucir "pixel perfect" a 1920px
+     con saltos bruscos en otros anchos. Por eso: **todo tamaño o
+     espaciado que en el Figma sea un valor fijo (tipografía, gaps,
+     posiciones, padding, border-radius) debe convertirse a
+     `clamp(mínimo, preferido, máximo)` proporcional al ancho de 1920px
+     como referencia — nunca usar valores px fijos para texto, gaps o
+     posiciones salvo casos justificados (p. ej. grosor de borde).**
+     Fórmula usada en el proyecto (ver `Hero.tsx` para el patrón):
+     - `preferido = (valor-px / 1920) * 100vw`
+     - `máximo = valor-px convertido a rem` (así nunca crece más allá del
+       valor exacto de Figma a 1920px o más ancho — el contenido no debe
+       estirarse infinitamente en monitores ultra anchos)
+     - `mínimo = (valor-px * 1366 / 1920)` convertido a rem (el valor que
+       tomaría exactamente en el borde inferior del rango fluido, 1366px)
+     - Este layout fiel a Figma vive detrás del breakpoint custom
+       `desktop:` (1366px, definido en `globals.css` como
+       `--breakpoint-desktop`), y el contenedor de contenido usa
+       `max-w-[120rem]` (= 1920px) centrado para no estirarse en
+       ultra-wide.
+   - **Mobile y tablet (< 1366px)** no tienen mockup de Figma: se
+     resuelven con criterio de UX propio (layout apilado, nav
+     colapsada, etc.), no como una versión escalada del layout de
+     desktop. Ver el patrón `HeroDesktop` / `HeroMobile` dentro de
+     `Hero.tsx`.
+   - **Verificación visual:** el proyecto tiene Playwright como
+     devDependency para capturar screenshots en varios anchos (375,
+     768, 1366, 1920, 2560px) y confirmar que no haya saltos de layout
+     al redimensionar. Usarlo al implementar o tocar el layout fluido
+     de cualquier sección.
+
 2. **Tipografías del proyecto:** Balimo (Regular y Medium) y Salty Ages
    (Regular). Se cargan como fuentes locales con `next/font/local` desde
    `src/lib/fonts.ts` (archivos en `src/fonts/`).
@@ -57,6 +90,91 @@ Landing page de un desarrollo inmobiliario llamado "San Francisco". Next.js
    los valores por defecto de las props (si existen) son solo para
    desarrollo/preview.
 
+7. **Animaciones de entrada al viewport: usar `AnimatedSection`**
+   (`src/components/AnimatedSection.tsx`) — es el patrón estándar para
+   cuando implementemos las 5 secciones restantes (`Distintivos`,
+   `ModelosDepartamentos`, `Recorrido360`, `Contacto`, `Footer`). No
+   crear animaciones de scroll-reveal ad-hoc con Framer Motion en cada
+   componente; envolver los bloques (título, párrafo, imagen, card,
+   etc.) con `<AnimatedSection>` en vez de reimplementar `motion.div` +
+   `whileInView` sueltos.
+   - Fade in + `translateY` sutil (~24px), dispara con `whileInView` y
+     `viewport={{ once: true, amount: 0.2 }}` (una sola vez, al 20%
+     visible), transición ~0.6s `ease-out`.
+   - Respeta `prefers-reduced-motion` automáticamente vía
+     `useReducedMotion` de Framer Motion — no hay que pasarle nada.
+   - Acepta `delay` (en segundos) para escalonar (stagger) varios
+     bloques dentro de una misma sección — ver el patrón en `Hero.tsx`
+     (título → párrafo → CTA con `delay` 0 / 0.15 / 0.3).
+   - `AnimatedSection` renderiza un `motion.div`: para envolver un
+     elemento que debe conservar su propia semántica/funcionalidad
+     (p. ej. un `<a>` con `href`), envolver el elemento *dentro* de
+     `<AnimatedSection>` en vez de reemplazarlo — no convertir links o
+     botones reales en `div`s.
+
+## Estándares de desarrollo
+
+Estos estándares aplican a **toda sección o componente que se implemente
+de aquí en adelante**, sin que haya que pedirlos explícitamente cada vez.
+Cuando se implemente o se toque `Distintivos`, `ModelosDepartamentos`,
+`Recorrido360`, `Contacto` o `Footer`, revisar esta lista antes de dar
+la sección por terminada.
+
+**Responsive**
+- Mobile-first con `clamp()` para el escalado fluido en desktop (patrón
+  ya establecido en el Hero — ver regla 1).
+- Cada sección debe verse bien en mobile (375px), tablet (768px) y
+  desktop (1920px+), aunque no exista mockup de Figma para esos tamaños
+  — usar buen criterio de UX manteniendo la jerarquía visual y la
+  paleta de la sección.
+
+**Animación**
+- Todas las secciones usan `AnimatedSection` (regla 7) para el fade-in
+  + movimiento al entrar al viewport.
+- Micro-interacciones en elementos interactivos: todo botón, link o
+  campo de formulario debe tener estados de `hover` y `focus` visibles,
+  con transición suave (`transition-colors`/`transition-opacity` etc.,
+  nunca un cambio instantáneo).
+
+**Accesibilidad**
+- HTML semántico: `header`, `nav`, `main`, `section`, `footer` — no
+  `div` genérico para todo.
+- Un solo `<h1>` en la página (el título del Hero); jerarquía lógica
+  de `h2`/`h3` por sección a partir de ahí.
+- `alt` descriptivo en toda imagen de contenido; `alt=""` solo en
+  imágenes puramente decorativas (icono junto a texto visible, etc.).
+- `aria-label` en botones que solo llevan ícono (hamburguesa, cerrar,
+  flechas de carrusel...), más `aria-expanded`/`aria-controls` cuando
+  el botón abre/cierra algo.
+- Navegable por teclado: focus visible en todo elemento interactivo
+  (no quitar el outline sin reemplazarlo), orden de tab lógico.
+- Contraste de color mínimo AA entre texto y fondo.
+
+**Rendimiento**
+- Toda imagen va con `next/image` (`Image` de `next/image`), con
+  `sizes` correcto y `priority` **solo** en la imagen above-the-fold
+  (el fondo del Hero). El resto, lazy loading por default (no forzar
+  `priority` en imágenes debajo del fold).
+  - Excepción: los SVG propios de UI (`logo.svg`, `play-icon.svg`) se
+    sirven con `Image` + `unoptimized` en vez de habilitar
+    `dangerouslyAllowSVG` en `next.config.ts` — son vectores locales
+    triviales, no vale la pena asumir el riesgo de optimizar SVGs vía
+    el image optimizer por ellos.
+- Ancho/alto explícitos (o `fill` dentro de un contenedor con tamaño
+  fijo) en toda imagen, para evitar layout shift — nunca una imagen
+  sin dimensiones reservadas.
+
+**SEO**
+- Metadata de Next.js (`title`, `description`, Open Graph) configurada
+  por página vía el export `metadata` (ver `src/app/layout.tsx`).
+- Textos descriptivos, nunca genéricos: "Ver Recorrido" sí, "Click
+  aquí" no.
+
+**Formularios** (aplica a `Contacto` cuando se implemente)
+- Validación inline con mensajes de error claros por campo.
+- Estado de carga/`disabled` en el botón de envío mientras se procesa.
+- Confirmación visible de envío exitoso o de error.
+
 ## Estructura relevante
 
 ```
@@ -66,6 +184,7 @@ src/
     page.tsx           # composición de las 6 secciones
     globals.css         # @theme: tokens de color y tipografía (Tailwind v4)
   components/
+    AnimatedSection.tsx  # fade in + translateY al entrar al viewport (Framer Motion)
     sections/           # Hero, Distintivos, ModelosDepartamentos,
                          # Recorrido360, Contacto, Footer
   fonts/                 # balimo-regular-webfont.*, salty_ages-webfont.*
