@@ -132,7 +132,7 @@ export default function HeroMobileMenu({
                     key={link.label}
                     href={link.href}
                     onClick={close}
-                    className="font-balimo text-xl text-ink transition-opacity duration-200 hover:opacity-70 focus-visible:opacity-70 focus-visible:outline-none"
+                    className="rounded-sm font-balimo text-xl text-ink transition-opacity duration-200 hover:opacity-70 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink"
                   >
                     {link.label}
                   </a>

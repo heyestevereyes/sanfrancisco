@@ -34,6 +34,10 @@ yarn-error.log*
 .env*
 !.env.example
 
+# master 4K del video del Hero (98 MB): no va al repo, solo la versión
+# web ya comprimida (sfvideo-1080p.mp4). Ver "Video del Hero" en CLAUDE.md.
+/public/images/Videos/sfvideo.mp4
+
 # vercel
 .vercel
 

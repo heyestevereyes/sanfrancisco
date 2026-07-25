@@ -44,7 +44,9 @@ export default function Hero({
   titleHighlight = "Altura",
   description = "San Francisco es un desarrollo pensado para quienes han elegido un nuevo estándar de vida: privacidad, elegancia y la tranquilidad de saber que llegaste a casa.",
   ctaLabel = "Ver Recorrido",
-  videoSrc = "/images/Videos/sfvideo.mp4",
+  // Versión web (1080p, ~9.8 MB). El master 4K original (sfvideo.mp4, 98 MB)
+  // se queda fuera del repo — ver "Video del Hero" en CLAUDE.md.
+  videoSrc = "/images/Videos/sfvideo-1080p.mp4",
   videoTitle = "Recorrido en video del desarrollo San Francisco",
   backgroundImage = {
     src: "/images/hero/background.png",

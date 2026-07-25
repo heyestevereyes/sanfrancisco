@@ -266,6 +266,31 @@ cliente. Buscar este encabezado antes de dar una sección por
   San Juan del Río, Qro. **Para resolverlo**: confirmar los tres con el
   cliente y pasarlos como props (o vía Sanity).
 
+## Video del Hero
+
+El CTA "Ver Recorrido" del Hero abre un `VideoLightbox` con el video del
+departamento. Hay **dos archivos** y solo uno va al repo:
+
+- `public/images/Videos/sfvideo-1080p.mp4` (~9.8 MB) — **el que se
+  sirve**, y el default de `videoSrc` en `Hero.tsx`. 1080p, H.264,
+  ~766 kbps, con `+faststart` para que empiece a reproducir sin
+  descargar el archivo completo. Sí se commitea.
+- `public/images/Videos/sfvideo.mp4` (98 MB) — master 4K original del
+  cliente. **Gitignoreado a propósito**: 98 MB rozan el límite duro de
+  100 MB por archivo de GitHub y quedarían en el historial para siempre.
+  Guardarlo aparte (Drive del cliente), no en el repo.
+
+El video no tiene pista de audio y el `<video>` va `muted`, así que los
+reencodes usan `-an`. Para regenerar la versión web desde el master:
+
+```
+ffmpeg -i sfvideo.mp4 -vf scale=-2:1080 -c:v libx264 -b:v 750k \
+  -preset slower -pix_fmt yuv420p -pass 1 -an -f null /dev/null
+ffmpeg -i sfvideo.mp4 -vf scale=-2:1080 -c:v libx264 -b:v 750k \
+  -preset slower -pix_fmt yuv420p -pass 2 -movflags +faststart -an \
+  sfvideo-1080p.mp4
+```
+
 ## Estructura relevante
 
 ```
