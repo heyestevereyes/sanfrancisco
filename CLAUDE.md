@@ -30,11 +30,34 @@ Landing page de un desarrollo inmobiliario llamado "San Francisco". Next.js
        estirarse infinitamente en monitores ultra anchos)
      - `mínimo = (valor-px * 1366 / 1920)` convertido a rem (el valor que
        tomaría exactamente en el borde inferior del rango fluido, 1366px)
-     - Este layout fiel a Figma vive detrás del breakpoint custom
-       `desktop:` (1366px, definido en `globals.css` como
-       `--breakpoint-desktop`), y el contenedor de contenido usa
-       `max-w-[120rem]` (= 1920px) centrado para no estirarse en
-       ultra-wide.
+     - Este layout fiel a Figma vive detrás del breakpoint `xl:`
+       (redefinido a 1366px en `globals.css` vía `--breakpoint-xl`), y
+       el contenedor de contenido usa `max-w-[120rem]` (= 1920px)
+       centrado para no estirarse en ultra-wide.
+     - **Por qué `xl:` y no un breakpoint con nombre custom** (p. ej.
+       `desktop:`): Tailwind v4 agrupa los breakpoints con nombre
+       arbitrario aparte de la escala default (sm/md/lg/xl/2xl) y los
+       emite *antes* que esta en el CSS generado, sin importar su valor
+       en px — eso rompe la cascada en cualquier vista que combine ese
+       breakpoint custom con `md:`/`lg:` en la misma propiedad (el que
+       aparece después en el CSS generado gana, no el de mayor
+       min-width). Redefinir el valor de `--breakpoint-xl` evita el
+       problema por completo porque Tailwind sí ordena la escala
+       default correctamente. No reintroducir un breakpoint con nombre
+       custom para esto.
+     - **Regla derivada — cuidado incluso con `xl:` ya arreglado:** en
+       cualquier componente de **un solo árbol** (sin el patrón
+       Desktop/Mobile de abajo — ver Galeria y Contacto) que mezcle
+       `sm:`/`md:` con `xl:` en la **misma propiedad CSS**, NO usar
+       `sm:`/`md:` a secas — Tailwind tampoco garantiza que esos
+       quedan *antes* que `xl:` en el CSS generado (lo mismo que
+       rompía `desktop:` puede pasar aunque ahora se llame `xl:`, la
+       causa raíz es mezclar 3 tiers en una propiedad, no el nombre).
+       Usar rangos acotados: `sm:max-xl:` / `md:max-xl:` en vez de
+       `sm:`/`md:` sueltos, así son mutuamente excluyentes con `xl:` y
+       no dependen del orden de emisión del CSS. Verificar siempre con
+       `getComputedStyle` en el navegador real a cada breakpoint, no
+       solo mirando las clases — ya pasó dos veces (Galeria, Contacto).
    - **Mobile y tablet (< 1366px)** no tienen mockup de Figma: se
      resuelven con criterio de UX propio (layout apilado, nav
      colapsada, etc.), no como una versión escalada del layout de
@@ -69,13 +92,20 @@ Landing page de un desarrollo inmobiliario llamado "San Francisco". Next.js
    `src/app/page.tsx`:
    - `Hero`
    - `Distintivos`
+   - `Galeria`
    - `ModelosDepartamentos`
    - `Recorrido360`
    - `Contacto`
    - `Footer`
 
-   Los seis existen como stubs tipados (`data-section="..."` + `// TODO`)
-   pendientes de implementación con los valores exactos del MCP.
+   Las que faltan existen como stubs tipados (`data-section="..."` +
+   `// TODO`) pendientes de implementación con los valores exactos del
+   MCP. `Galeria` es la excepción a la separación Desktop/Mobile de la
+   regla 1: al ser un carrusel interactivo (embla-carousel), usa un
+   único árbol de componentes con clases responsivas (`xl:` para
+   los valores exactos de Figma, breakpoints normales para mobile/
+   tablet) en vez de dos DOM duplicados — duplicar el carrusel rompería
+   las mediciones de embla en la instancia oculta vía `display:none`.
 
 5. **`Recorrido360`** aloja un `<iframe>` con el tour virtual de Realsee.
    Por ahora es un placeholder (`tourSrc` con default `about:blank`).
@@ -170,22 +200,85 @@ la sección por terminada.
 - Textos descriptivos, nunca genéricos: "Ver Recorrido" sí, "Click
   aquí" no.
 
-**Formularios** (aplica a `Contacto` cuando se implemente)
-- Validación inline con mensajes de error claros por campo.
-- Estado de carga/`disabled` en el botón de envío mientras se procesa.
+**Formularios**
+- Validación inline con mensajes de error claros por campo — y nunca
+  confiar solo en la validación del cliente: si un formulario pega a
+  una API route propia, esa route debe validar de nuevo con las
+  mismas reglas (ver `src/lib/contactValidation.ts`, compartido entre
+  `ContactoForm.tsx` y `src/app/api/contact/route.ts`).
 - Confirmación visible de envío exitoso o de error.
+- `Contacto` envía por correo vía Resend (`src/app/api/contact/route.ts`
+  → `POST` con `{ nombre, email, telefono }`), no a WhatsApp ni a un
+  backend propio distinto. Ver "Pendientes del cliente" abajo para las
+  variables de entorno que faltan.
+
+## Pendientes del cliente
+
+Cosas que dependen de información que todavía no nos ha dado el
+cliente. Buscar este encabezado antes de dar una sección por
+"lista para producción".
+
+- **`RESEND_API_KEY` y `CONTACT_EMAIL_TO` de `Contacto`**: la API route
+  `src/app/api/contact/route.ts` envía el correo del formulario de
+  contacto vía Resend usando estas dos variables de entorno. Mientras
+  no tengamos los valores reales, `.env.local` trae los placeholders
+  deliberadamente inválidos `RESEND_API_KEY=PENDIENTE_RESEND_API_KEY` y
+  `CONTACT_EMAIL_TO=PENDIENTE_CORREO_CLIENTE` — la API route detecta el
+  prefijo `PENDIENTE_` y responde con un error claro (en vez de
+  intentar enviar) más un `console.warn` en el servidor. **Para
+  resolverlo**: reemplazar ambos valores en `.env.local` por la API key
+  real de Resend y el correo real de destino (`.env.example` documenta
+  las claves sin valores, para referencia — nunca poner la key real
+  ahí, ese archivo sí se commitea).
+
+- **`instagramHref` de `Footer`**: el cliente todavía no nos da la cuenta
+  real de Instagram. El valor por defecto en `Footer.tsx`
+  (`https://www.instagram.com/PENDIENTE_USUARIO_INSTAGRAM/`) es un
+  placeholder deliberadamente reconocible (prefijo `PENDIENTE_`), no una
+  URL real — a diferencia del correo/Resend, esto no bloquea ninguna
+  funcionalidad server-side, así que no lleva `console.warn`. **Para
+  resolverlo**: pasar el `instagramHref` real como prop cuando exista
+  (o reemplazar el default una vez conectado a Sanity).
+
+- **`NEXT_PUBLIC_SITE_URL` (dominio de producción)**: `src/app/layout.tsx`
+  resuelve `metadataBase` desde esta variable para que las URLs absolutas
+  de Open Graph apunten al dominio real. Mientras no exista, la variable
+  se deja vacía y `metadataBase` queda `undefined` **a propósito**: el
+  build de Next.js emite `metadataBase property is not set...` y ese
+  warning es el recordatorio. No ponerle un fallback a `localhost` —
+  silenciaría el aviso y publicaría URLs de OG rotas sin que nadie se
+  entere. **Para resolverlo**: poner el dominio real (con protocolo, sin
+  barra final) en `NEXT_PUBLIC_SITE_URL` en el entorno de producción.
+
+- **Contenido de `ModelosDepartamentos`**: la sección sigue siendo un stub
+  de altura 0 (`src/components/sections/ModelosDepartamentos.tsx`) — falta
+  que el cliente nos pase los modelos/plantas y que saquemos los valores
+  exactos del MCP de Figma. Ojo: el link **"Departamentos"** del nav del
+  Hero apunta a su `id="departamentos"`, así que hasta que la sección
+  tenga contenido ese link salta al límite entre Galería y Recorrido 360.
+  Se arregla solo al implementarla.
+
+- **Datos de contacto del `Footer`**: `email` (`Info@sanfrancisco.com`),
+  `phone` (`+1 (312) 555 0140`) y `hours` (`Mon–Fri, 9–6 CT`) son los
+  valores que venían en el mockup de Figma, no datos confirmados por el
+  cliente — el teléfono es de área de Chicago y el horario está en inglés
+  y en hora del centro de EE.UU., lo cual no cuadra con un desarrollo en
+  San Juan del Río, Qro. **Para resolverlo**: confirmar los tres con el
+  cliente y pasarlos como props (o vía Sanity).
 
 ## Estructura relevante
 
 ```
 src/
   app/
-    layout.tsx        # fuentes (balimo, saltyAges) aplicadas como CSS vars
-    page.tsx           # composición de las 6 secciones
+    layout.tsx        # fuentes (balimo, saltyAges) + scroll-smooth
+    page.tsx           # composición de las secciones
     globals.css         # @theme: tokens de color y tipografía (Tailwind v4)
   components/
     AnimatedSection.tsx  # fade in + translateY al entrar al viewport (Framer Motion)
-    sections/           # Hero, Distintivos, ModelosDepartamentos,
+    icons/               # CrestIcon, ChevronIcon, ArrowIcon, InstagramIcon:
+                         # SVG inline reutilizables (currentColor)
+    sections/           # Hero, Distintivos, Galeria, ModelosDepartamentos,
                          # Recorrido360, Contacto, Footer
   fonts/                 # balimo-regular-webfont.*, salty_ages-webfont.*
   lib/

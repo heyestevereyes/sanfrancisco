@@ -58,7 +58,7 @@ export default function HeroMobileMenu({
 
   return (
     <>
-      <header className="fixed inset-x-0 top-0 z-40 flex items-center justify-between px-4 py-4 sm:px-8 sm:py-5 md:px-12 desktop:hidden">
+      <header className="fixed inset-x-0 top-0 z-40 flex items-center justify-between px-4 py-4 sm:px-8 sm:py-5 md:px-12 xl:hidden">
         <Image
           src={logo.src}
           alt={logo.alt}
@@ -101,7 +101,7 @@ export default function HeroMobileMenu({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.28, ease: "easeOut" }}
-            className="fixed inset-0 z-50 flex flex-col items-center bg-cream px-6 pt-24 pb-10 desktop:hidden"
+            className="fixed inset-0 z-50 flex flex-col items-center bg-cream px-6 pt-24 pb-10 xl:hidden"
           >
             <button
               ref={closeButtonRef}

@@ -1,6 +1,11 @@
+"use client";
+
+import { useState } from "react";
 import Image from "next/image";
+import { AnimatePresence } from "framer-motion";
 import AnimatedSection from "@/components/AnimatedSection";
 import HeroMobileMenu from "./HeroMobileMenu";
+import VideoLightbox from "./VideoLightbox";
 
 export interface HeroNavLink {
   label: string;
@@ -16,7 +21,10 @@ export interface HeroProps {
   titleHighlight?: string;
   description?: string;
   ctaLabel?: string;
-  ctaHref?: string;
+  /** Ruta del video real del recorrido — se abre en un lightbox al hacer
+   * click en el CTA (ver VideoLightbox.tsx). */
+  videoSrc?: string;
+  videoTitle?: string;
   backgroundImage?: { src: string; alt: string };
 }
 
@@ -36,14 +44,17 @@ export default function Hero({
   titleHighlight = "Altura",
   description = "San Francisco es un desarrollo pensado para quienes han elegido un nuevo estándar de vida: privacidad, elegancia y la tranquilidad de saber que llegaste a casa.",
   ctaLabel = "Ver Recorrido",
-  ctaHref = "#recorrido",
+  videoSrc = "/images/Videos/sfvideo.mp4",
+  videoTitle = "Recorrido en video del desarrollo San Francisco",
   backgroundImage = {
     src: "/images/hero/background.png",
     alt: "Edificio San Francisco al atardecer",
   },
 }: HeroProps) {
+  const [videoTrigger, setVideoTrigger] = useState<HTMLElement | null>(null);
+
   return (
-    <section data-section="hero" className="relative w-full">
+    <section id="inicio" data-section="hero" className="relative w-full">
       <HeroDesktop
         logo={logo}
         navLinks={navLinks}
@@ -53,7 +64,7 @@ export default function Hero({
         titleHighlight={titleHighlight}
         description={description}
         ctaLabel={ctaLabel}
-        ctaHref={ctaHref}
+        onCtaClick={setVideoTrigger}
         backgroundImage={backgroundImage}
       />
       <HeroMobile
@@ -65,24 +76,47 @@ export default function Hero({
         titleHighlight={titleHighlight}
         description={description}
         ctaLabel={ctaLabel}
-        ctaHref={ctaHref}
+        onCtaClick={setVideoTrigger}
         backgroundImage={backgroundImage}
       />
+
+      <AnimatePresence>
+        {videoTrigger && (
+          <VideoLightbox
+            videoSrc={videoSrc}
+            title={videoTitle}
+            onClose={() => setVideoTrigger(null)}
+            triggerElement={videoTrigger}
+          />
+        )}
+      </AnimatePresence>
     </section>
   );
 }
 
-type HeroVariantProps = Required<HeroProps>;
+type HeroVariantProps = Required<Omit<HeroProps, "videoSrc" | "videoTitle">> & {
+  /** Abre el lightbox de video, recibe el botón que disparó el click
+   * (para devolver el foco ahí al cerrar). */
+  onCtaClick: (trigger: HTMLElement) => void;
+};
 
 /**
  * Layout fiel al frame de Figma (node-id 1:3, canvas de 1920px), visible a
- * partir del breakpoint `desktop` (1366px). Todos los tamaños/espaciados
+ * partir del breakpoint `xl:` (1366px). Todos los tamaños/espaciados
  * que en el Figma son un valor fijo se expresan como
  * clamp(valor-en-1366px, valor-px/1920*100vw, valor-en-1920px) — ver regla
  * de escalado fluido en CLAUDE.md. Por eso el diseño coincide exactamente
  * con el Figma solo a 1920px de ancho de ventana, y escala proporcionalmente
  * por debajo (hasta 1366px) y se estabiliza por arriba (2560px+). La altura
  * es 100dvh (viewport completo) en vez de aspect-ratio, por pedido explícito.
+ * El `sizes` del fondo usa media query condicional (no un "100vw" fijo):
+ * como HeroDesktop y HeroMobile están siempre ambos en el DOM (uno oculto
+ * vía CSS según el breakpoint), el que está oculto mide 0px de ancho
+ * real — con sizes="100vw" fijo, Next.js compara ese 0px contra el 100vw
+ * declarado y tira el warning "image is not rendered at full viewport
+ * width" en la instancia oculta. Declarar el mismo breakpoint en `sizes`
+ * hace que el valor declarado coincida con el ancho real en ambos
+ * estados (100vw visible, ~0px oculto), sin warning.
  */
 function HeroDesktop({
   logo,
@@ -93,18 +127,18 @@ function HeroDesktop({
   titleHighlight,
   description,
   ctaLabel,
-  ctaHref,
+  onCtaClick,
   backgroundImage,
 }: HeroVariantProps) {
   return (
-    <div className="relative hidden w-full overflow-hidden desktop:block desktop:h-dvh">
+    <div className="relative hidden w-full overflow-hidden xl:block xl:h-dvh">
       <div aria-hidden className="absolute inset-0 pointer-events-none">
         <Image
           src={backgroundImage.src}
           alt={backgroundImage.alt}
           fill
           priority
-          sizes="100vw"
+          sizes="(min-width: 1366px) 100vw, 1px"
           className="object-cover"
         />
         <div className="absolute inset-0 bg-overlay" />
@@ -182,8 +216,9 @@ function HeroDesktop({
             </AnimatedSection>
 
             <AnimatedSection delay={0.3} className="shrink-0">
-              <a
-                href={ctaHref}
+              <button
+                type="button"
+                onClick={(event) => onCtaClick(event.currentTarget)}
                 className="border border-white-40 border-solid content-stretch flex items-center relative rounded-[clamp(0.445rem,0.521vw,0.625rem)] shrink-0 gap-[clamp(0.534rem,0.625vw,0.75rem)] px-[clamp(1.112rem,1.302vw,1.563rem)] py-[clamp(0.667rem,0.781vw,0.938rem)] transition-colors duration-200 hover:bg-white-15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
               >
                 <span className="bg-white-15 relative rounded-full shrink-0 size-[clamp(1.245rem,1.458vw,1.75rem)]">
@@ -203,7 +238,7 @@ function HeroDesktop({
                 <span className="[word-break:break-word] font-balimo font-medium not-italic relative shrink-0 text-center text-white whitespace-nowrap text-[clamp(0.712rem,0.833vw,1rem)] leading-[clamp(1.067rem,1.25vw,1.5rem)]">
                   {ctaLabel}
                 </span>
-              </a>
+              </button>
             </AnimatedSection>
           </div>
         </div>
@@ -227,18 +262,18 @@ function HeroMobile({
   titleHighlight,
   description,
   ctaLabel,
-  ctaHref,
+  onCtaClick,
   backgroundImage,
 }: HeroVariantProps) {
   return (
-    <div className="relative flex h-dvh w-full flex-col overflow-hidden desktop:hidden">
+    <div className="relative flex h-dvh w-full flex-col overflow-hidden xl:hidden">
       <div aria-hidden className="absolute inset-0 pointer-events-none">
         <Image
           src={backgroundImage.src}
           alt={backgroundImage.alt}
           fill
           priority
-          sizes="100vw"
+          sizes="(max-width: 1365px) 100vw, 1px"
           className="object-cover"
         />
         <div className="absolute inset-0 bg-overlay" />
@@ -270,8 +305,9 @@ function HeroMobile({
         </AnimatedSection>
 
         <AnimatedSection delay={0.3} className="shrink-0">
-          <a
-            href={ctaHref}
+          <button
+            type="button"
+            onClick={(event) => onCtaClick(event.currentTarget)}
             className="flex shrink-0 items-center gap-3 rounded-[10px] border border-white-40 px-5 py-3 transition-colors duration-200 hover:bg-white-15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
           >
             <span className="relative flex size-7 shrink-0 items-center justify-center rounded-full bg-white-15">
@@ -289,7 +325,7 @@ function HeroMobile({
             <span className="whitespace-nowrap font-balimo font-medium text-sm text-white">
               {ctaLabel}
             </span>
-          </a>
+          </button>
         </AnimatedSection>
       </div>
     </div>

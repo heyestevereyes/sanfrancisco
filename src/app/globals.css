@@ -7,11 +7,20 @@
 }
 
 /*
- * Breakpoint propio para el layout "fiel a Figma" (fluido vía clamp()).
- * Por debajo de 1366px se usa un layout propio (mobile/tablet, sin mockup).
+ * Breakpoint "desktop" (1366px) para el layout "fiel a Figma" (fluido vía
+ * clamp()). Por debajo de 1366px se usa un layout propio (mobile/tablet,
+ * sin mockup). Se usa la clase `xl:` para esto — NO un nombre custom
+ * (`desktop:`) — porque Tailwind v4 agrupa los breakpoints con nombre
+ * arbitrario aparte de la escala default (sm/md/lg/xl/2xl) y los emite
+ * antes que esta en el CSS generado, sin importar su valor en px. Eso
+ * rompe la cascada: en cualquier viewport ≥1366px, `md:`/`lg:` (que
+ * aparecen después en el CSS) le ganaban a un `desktop:` custom aunque
+ * este debiera tener prioridad por ser el breakpoint más grande.
+ * Redefinir `--breakpoint-xl` (que Tailwind sí ordena correctamente
+ * dentro de la escala default) evita el problema por completo.
  */
 @theme {
-  --breakpoint-desktop: 1366px;
+  --breakpoint-xl: 1366px;
 }
 
 /*
@@ -34,6 +43,12 @@
   --color-sand: #f7e7cc;
   --color-forest: #1d221c;
   --color-panel: #f0f0f0;
+
+  /* gallery-sec / Galeria (node-id 22:225) */
+  --color-white-25: rgba(255, 255, 255, 0.25);
+
+  /* recorrido-sec / Recorrido360 (node-id 1:52) */
+  --color-steel: #9c9c9c;
 }
 
 body {

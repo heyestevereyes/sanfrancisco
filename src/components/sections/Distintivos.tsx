@@ -1,6 +1,7 @@
 import Image from "next/image";
 import AnimatedSection from "@/components/AnimatedSection";
 import CrestIcon from "@/components/icons/CrestIcon";
+import ArrowIcon from "@/components/icons/ArrowIcon";
 
 export interface DistintivosProps {
   flowerIcon?: { src: string; alt: string };
@@ -27,7 +28,7 @@ const defaultProps: Required<DistintivosProps> = {
 export default function Distintivos(props: DistintivosProps) {
   const merged = { ...defaultProps, ...props };
   return (
-    <section data-section="distintivos" className="relative w-full">
+    <section id="nosotros" data-section="distintivos" className="relative w-full">
       <DistintivosDesktop {...merged} />
       <DistintivosMobile {...merged} />
     </section>
@@ -38,7 +39,7 @@ type DistintivosVariantProps = Required<DistintivosProps>;
 
 /**
  * Layout fiel al frame de Figma (node-id 1:39 "acerca-sec", canvas de
- * 1920px), visible a partir del breakpoint `desktop` (1366px). Mismo
+ * 1920px), visible a partir del breakpoint `xl:` (1366px). Mismo
  * patrón de escalado fluido que Hero.tsx (clamp() proporcional a 1920px,
  * ver regla 1 de CLAUDE.md). El panel izquierdo (degradado) ocupa
  * exactamente 943/1920 = 49.1146% del ancho de referencia — el ave queda
@@ -59,7 +60,7 @@ function DistintivosDesktop({
   const paragraphs = description.split("\n\n");
 
   return (
-    <div className="relative hidden w-full overflow-hidden bg-panel desktop:block">
+    <div className="relative hidden w-full overflow-hidden bg-panel xl:block">
       <div className="relative mx-auto min-h-[clamp(41.487rem,48.594vw,58.3125rem)] max-w-[120rem]">
         {/* Panel izquierdo: degradado sage → sand → gold, 943/1920 del ancho */}
         <div className="absolute inset-y-0 left-0 w-[49.1146%] bg-gradient-to-b from-sage via-sand via-[50.962%] to-gold" />
@@ -95,15 +96,7 @@ function DistintivosDesktop({
             <span className="whitespace-nowrap font-balimo font-medium text-white text-[clamp(0.712rem,0.833vw,1rem)] leading-[clamp(1.067rem,1.25vw,1.5rem)]">
               {galleryLabel}
             </span>
-            <span className="relative size-[clamp(0.8rem,0.938vw,1.125rem)] shrink-0">
-              <Image
-                src="/images/distintivos/arrow-icon.svg"
-                alt=""
-                fill
-                sizes="18px"
-                unoptimized
-              />
-            </span>
+            <ArrowIcon className="size-[clamp(0.8rem,0.938vw,1.125rem)] shrink-0 text-white" />
           </a>
         </AnimatedSection>
 
@@ -178,7 +171,7 @@ function DistintivosMobile({
   const paragraphs = description.split("\n\n");
 
   return (
-    <div className="relative flex w-full flex-col desktop:hidden">
+    <div className="relative flex w-full flex-col xl:hidden">
       <div className="relative flex flex-col items-center gap-6 bg-gradient-to-b from-sage via-sand via-[51%] to-gold px-6 pb-16 pt-14 text-center sm:gap-8 sm:px-12 sm:pb-20 sm:pt-16 md:px-16">
         <AnimatedSection>
           <div className="relative size-12 sm:size-16">
@@ -205,15 +198,7 @@ function DistintivosMobile({
             <span className="whitespace-nowrap font-balimo font-medium text-sm text-white">
               {galleryLabel}
             </span>
-            <span className="relative size-[18px] shrink-0">
-              <Image
-                src="/images/distintivos/arrow-icon.svg"
-                alt=""
-                fill
-                sizes="18px"
-                unoptimized
-              />
-            </span>
+            <ArrowIcon className="size-[18px] shrink-0 text-white" />
           </a>
         </AnimatedSection>
       </div>

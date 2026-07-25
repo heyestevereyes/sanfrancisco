@@ -1,6 +1,7 @@
 import {
   Hero,
   Distintivos,
+  Galeria,
   ModelosDepartamentos,
   Recorrido360,
   Contacto,
@@ -12,6 +13,7 @@ export default function Home() {
     <main className="flex-1">
       <Hero />
       <Distintivos />
+      <Galeria />
       <ModelosDepartamentos />
       <Recorrido360 />
       <Contacto />
