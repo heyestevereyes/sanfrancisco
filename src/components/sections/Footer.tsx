@@ -179,7 +179,7 @@ function FooterMobile({
           src={logo.src}
           alt={logo.alt}
           width={357}
-          height={53}
+          height={52}
           unoptimized
           className="h-10 w-auto sm:h-12 md:h-14"
         />

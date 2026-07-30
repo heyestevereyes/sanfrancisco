@@ -63,7 +63,7 @@ export default function HeroMobileMenu({
           src={logo.src}
           alt={logo.alt}
           width={357}
-          height={53}
+          height={52}
           unoptimized
           className="h-6 w-auto shrink-0 sm:h-8 md:h-9"
         />

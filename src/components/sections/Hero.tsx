@@ -156,7 +156,10 @@ function HeroDesktop({
       <div className="absolute inset-y-0 left-1/2 flex w-full max-w-[120rem] -translate-x-1/2 flex-col items-start justify-center">
         <div className="content-stretch flex items-end justify-between absolute top-[clamp(1.423rem,1.667vw,2rem)] left-0 right-0 px-[clamp(3.491rem,4.089vw,4.906rem)]">
           <div className="overflow-clip relative shrink-0 h-[clamp(2.624rem,3.073vw,3.688rem)] w-[clamp(15.874rem,18.594vw,22.313rem)]">
-            <div className="absolute inset-[0_0_11.63%_0]">
+            {/* El contenedor mide 59px de alto a 1920px (el frame de Figma) y
+                el lockup 52px, así que el bloque de la imagen ocupa el
+                88.14% superior: (59-52)/59 = 11.86% de inset abajo. */}
+            <div className="absolute inset-[0_0_11.86%_0]">
               <Image
                 src={logo.src}
                 alt={logo.alt}
