@@ -38,6 +38,9 @@ yarn-error.log*
 # web ya comprimida (sfvideo-1080p.mp4). Ver "Video del Hero" en CLAUDE.md.
 /public/images/Videos/sfvideo.mp4
 
+# artefactos que el Studio de Sanity genera en dev
+.sanity/
+
 # vercel
 .vercel
 

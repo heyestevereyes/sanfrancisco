@@ -114,11 +114,12 @@ Landing page de un desarrollo inmobiliario llamado "San Francisco". Next.js
    valores inventados.
 
 6. **Los componentes reciben texto e imágenes por props desde el inicio**
-   (ver las interfaces `*Props` en cada archivo de sección), pensando en
-   la futura integración de **Sanity** como CMS headless. Ningún texto o
-   imagen de contenido debe quedar hardcodeado dentro del componente;
-   los valores por defecto de las props (si existen) son solo para
-   desarrollo/preview.
+   (ver las interfaces `*Props` en cada archivo de sección). **Sanity ya
+   está integrado** — ver la sección "Sanity (CMS)" más abajo. Ningún
+   texto o imagen de contenido debe quedar hardcodeado dentro del
+   componente; los valores por defecto de las props siguen existiendo,
+   pero ahora cumplen un rol concreto: son el **fallback** cuando Sanity
+   no devuelve ese campo.
 
 7. **Animaciones de entrada al viewport: usar `AnimatedSection`**
    (`src/components/AnimatedSection.tsx`) — es el patrón estándar para
@@ -250,6 +251,33 @@ cliente. Buscar este encabezado antes de dar una sección por
   entere. **Para resolverlo**: poner el dominio real (con protocolo, sin
   barra final) en `NEXT_PUBLIC_SITE_URL` en el entorno de producción.
 
+- **`SANITY_REVALIDATE_SECRET`**: secreto compartido entre el webhook de
+  Sanity y `src/app/api/revalidate/route.ts`, que lo verifica antes de
+  invalidar caché. Mientras no exista, `.env.local` trae el placeholder
+  deliberadamente inválido `SANITY_REVALIDATE_SECRET=PENDIENTE_SANITY_REVALIDATE_SECRET`
+  — la route detecta el prefijo `PENDIENTE_` y responde 503 con un
+  `console.warn`, igual que el de Resend. **Para resolverlo**: generar un
+  string aleatorio, ponerlo en `.env.local` (y en el entorno de
+  producción) y el mismo valor en el webhook de Sanity Manage → API →
+  Webhooks. Sin esto el sitio funciona igual, solo que el contenido
+  publicado no aparece hasta el siguiente build.
+  **No hace falta `SANITY_API_TOKEN`**: el dataset `production` es
+  legible sin autenticar y el sitio solo lee, nunca escribe. Si en algún
+  momento se pone el dataset en privado o se añade draft mode, ahí sí
+  habría que agregar un token de lectura.
+
+- **Orígenes CORS de Sanity**: hay que registrar `http://localhost:3000`
+  y el dominio de producción en Sanity Manage → API → CORS origins, o el
+  Studio de `/studio` muestra "Connect this Studio to your project" en
+  vez del editor. Es configuración en el panel de Sanity, no código.
+
+- **Migrar el contenido a Sanity**: los 6 documentos singleton todavía no
+  existen (el dataset tiene 0 documentos), así que el sitio se está
+  renderizando enteramente con los valores por defecto de cada
+  componente. Hay que entrar a `/studio` y cargar el contenido real
+  sección por sección. Hasta entonces todo se ve exactamente igual que
+  antes de integrar el CMS.
+
 - **Contenido de `ModelosDepartamentos`**: la sección sigue siendo un stub
   de altura 0 (`src/components/sections/ModelosDepartamentos.tsx`) — falta
   que el cliente nos pase los modelos/plantas y que saquemos los valores
@@ -265,6 +293,87 @@ cliente. Buscar este encabezado antes de dar una sección por
   y en hora del centro de EE.UU., lo cual no cuadra con un desarrollo en
   San Juan del Río, Qro. **Para resolverlo**: confirmar los tres con el
   cliente y pasarlos como props (o vía Sanity).
+
+## Sanity (CMS)
+
+El contenido de las 6 secciones implementadas se edita en un **Studio
+embebido en la ruta `/studio`** del mismo repo. Proyecto `o9u4v7pb`,
+dataset `production`.
+
+**Archivos**
+
+```
+sanity.config.ts             # raíz — basePath /studio, singletons, structure
+src/sanity/
+  env.ts                     # projectId / dataset / apiVersion
+  schemas/                   # un archivo por sección + index.ts
+src/lib/sanity/
+  client.ts                  # createClient + sanityFetch() con tags
+  image.ts                   # resolveImage(): imagen de Sanity -> {src, alt}
+  queries.ts                 # getHero(), getFooter(), ... (GROQ)
+src/app/studio/[[...tool]]/page.tsx
+src/app/api/revalidate/route.ts
+```
+
+**Las 6 secciones son singletons.** Un documento por tipo, con `_id`
+igual al `_type` (`"hero"`, `"footer"`, ...). Por eso las queries usan
+`*[_type == "hero" && _id == "hero"][0]` y la config le quita al Studio
+las acciones de crear/duplicar/borrar: si existieran dos documentos del
+mismo tipo, el `[0]` elegiría uno arbitrariamente.
+
+**El fallback es lo que mantiene el sitio en pie.** Cada `get*()`
+devuelve un objeto **parcial** de props del que ya se filtraron las
+claves vacías (`definedOnly` en `queries.ts`), y `page.tsx` lo hace
+spread sobre el componente. Si Sanity no responde, o el documento no
+existe, o un campo está en blanco, esa clave no llega y el default del
+componente toma su lugar. Dos detalles que **no** hay que romper:
+
+- `sanityFetch` **atrapa los errores y devuelve `null`** en vez de
+  propagarlos. Si dejara reventar la excepción, un dataset caído tiraría
+  el build entero en vez de degradar a los defaults.
+- `definedOnly` no es cosmético. Cuatro secciones (Distintivos,
+  Recorrido360, Contacto, Footer) resuelven sus defaults con
+  `{ ...defaultProps, ...props }`: pasarles `{ title: undefined }`
+  pisaría el default con `undefined` y dejaría la sección vacía. Hay que
+  borrar la clave, no ponerla en `undefined`.
+
+**Qué NO es editable desde el CMS, a propósito**
+
+- `logo` y `flowerIcon`: assets vectoriales versionados en el repo y
+  sincronizados con Figma.
+- `navLinks`, `galleryHref`, `ctaHref`: son anclas internas acopladas a
+  los `id` de las secciones; moverlas desde el CMS rompería el nav.
+- `tourTitle`, `placeholderMessage`, `submitLabel`, `successMessage`,
+  `mapEmbedUrl`, `mapTitle`, `instagramLabel`: copy técnico de
+  accesibilidad y de estado, no contenido de marketing.
+- **El correo de destino del formulario.** Sigue en `CONTACT_EMAIL_TO`
+  (variable de entorno, solo servidor). El dataset es legible sin token,
+  así que moverlo a Sanity lo volvería público y dejaría que cualquiera
+  con acceso al Studio redirija los leads.
+
+**Caching y revalidación (ojo, Next 16 cambió esto)**
+
+- `fetch` **no** cachea por defecto desde Next 15, así que `sanityFetch`
+  pide `cache: "force-cache"` explícitamente. Sin eso, cada request
+  pegaría a Sanity de nuevo.
+- Cada query se marca con un tag por sección (`SECTION_TAGS`).
+- `revalidateTag` ahora toma **dos** argumentos; la forma de un solo
+  argumento está deprecada. Para webhooks de terceros los docs piden
+  `{ expire: 0 }` (caducar ya) en vez de `"max"`
+  (stale-while-revalidate).
+- `/api/revalidate` verifica la firma del webhook antes de invalidar
+  nada: la ruta es pública y sin esa comprobación cualquiera podría
+  tirar la caché a voluntad.
+
+**Configuración externa pendiente (no es código)**
+
+1. **Orígenes CORS** en Sanity Manage → API → CORS origins: hay que
+   añadir `http://localhost:3000` (dev) y el dominio de producción. Sin
+   esto el Studio carga pero muestra "Connect this Studio to your
+   project" en vez del editor.
+2. **Webhook** en Sanity Manage → API → Webhooks, apuntando a
+   `https://<dominio>/api/revalidate`, POST, dataset `production`, con
+   el mismo secreto que `SANITY_REVALIDATE_SECRET`.
 
 ## Video del Hero
 
@@ -294,11 +403,16 @@ ffmpeg -i sfvideo.mp4 -vf scale=-2:1080 -c:v libx264 -b:v 750k \
 ## Estructura relevante
 
 ```
+sanity.config.ts           # config del Studio embebido (raíz, la pide Sanity)
 src/
   app/
     layout.tsx        # fuentes (balimo, saltyAges) + scroll-smooth
-    page.tsx           # composición de las secciones
+    page.tsx           # Server Component: fetch a Sanity + composición
     globals.css         # @theme: tokens de color y tipografía (Tailwind v4)
+    api/
+      contact/route.ts    # POST del formulario -> Resend
+      revalidate/route.ts # webhook de Sanity -> revalidateTag
+    studio/[[...tool]]/   # Studio de Sanity en /studio
   components/
     AnimatedSection.tsx  # fade in + translateY al entrar al viewport (Framer Motion)
     icons/               # CrestIcon, ChevronIcon, ArrowIcon, InstagramIcon:
@@ -308,4 +422,9 @@ src/
   fonts/                 # balimo-regular-webfont.*, salty_ages-webfont.*
   lib/
     fonts.ts             # next/font/local
+    contactValidation.ts # reglas compartidas cliente/servidor del form
+    sanity/              # client.ts, image.ts, queries.ts (GROQ tipadas)
+  sanity/
+    env.ts               # projectId / dataset / apiVersion
+    schemas/             # un schema por sección + index.ts
 ```
