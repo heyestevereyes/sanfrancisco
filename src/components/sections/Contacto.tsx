@@ -1,5 +1,6 @@
 import AnimatedSection from "@/components/AnimatedSection";
 import CrestIcon from "@/components/icons/CrestIcon";
+import { contactoDefaults } from "@/content/defaults";
 import ContactoForm from "./ContactoForm";
 
 export interface ContactoProps {
@@ -11,7 +12,10 @@ export interface ContactoProps {
 }
 
 const defaultProps: Required<ContactoProps> = {
-  title: "Hablemos de tu nuevo hogar",
+  // Solo `title` es editable desde el CMS (src/content/defaults.ts,
+  // compartido con `npm run seed`). El resto es copy de formulario y la
+  // URL del mapa, que no se administran como contenido.
+  ...contactoDefaults,
   submitLabel: "Enviar",
   successMessage: "¡Gracias! Nos pondremos en contacto pronto.",
   mapEmbedUrl:

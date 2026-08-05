@@ -1,4 +1,5 @@
 import AnimatedSection from "@/components/AnimatedSection";
+import { recorrido360Defaults } from "@/content/defaults";
 
 export interface Recorrido360Props {
   title?: string;
@@ -16,12 +17,12 @@ export interface Recorrido360Props {
 }
 
 const defaultProps: Required<Recorrido360Props> = {
-  title: "Haz un recorrido",
-  description:
-    "Desde departamentos compactos ideales para quienes buscan eficiencia y diseño, hasta modelos amplios pensados para familias que valoran el espacio y la comodidad — cada planta fue concebida para maximizar funcionalidad sin perder calidez.",
-  tourEmbedUrl: "https://realsee.ai/a9rrxEdY",
+  // Copy técnico (título del iframe para lectores de pantalla y estado
+  // vacío): no se edita desde el CMS.
   tourTitle: "Tour virtual 360° del departamento San Francisco",
   placeholderMessage: "Tour virtual próximamente",
+  // El resto sale de src/content/defaults.ts, compartido con `npm run seed`.
+  ...recorrido360Defaults,
 };
 
 // recorrido-sec (node-id 1:52). El contenedor del embed (758px de alto a

@@ -271,12 +271,13 @@ cliente. Buscar este encabezado antes de dar una sección por
   Studio de `/studio` muestra "Connect this Studio to your project" en
   vez del editor. Es configuración en el panel de Sanity, no código.
 
-- **Migrar el contenido a Sanity**: los 6 documentos singleton todavía no
-  existen (el dataset tiene 0 documentos), así que el sitio se está
-  renderizando enteramente con los valores por defecto de cada
-  componente. Hay que entrar a `/studio` y cargar el contenido real
-  sección por sección. Hasta entonces todo se ve exactamente igual que
-  antes de integrar el CMS.
+- **Datos reales del cliente en Sanity**: el contenido ya está migrado
+  (`npm run seed`), pero lo que se subió son los valores del mockup, no
+  datos confirmados. Siguen pendientes de corregir **en el Studio**: el
+  `email`, `phone` y `hours` del Footer (teléfono de Chicago y horario en
+  inglés — ver más abajo) y el `instagramHref`, que se migró con el
+  placeholder `PENDIENTE_USUARIO_INSTAGRAM`. También faltan más fotos de
+  galería: el cliente solo dio 6.
 
 - **Contenido de `ModelosDepartamentos`**: la sección sigue siendo un stub
   de altura 0 (`src/components/sections/ModelosDepartamentos.tsx`) — falta
@@ -364,6 +365,43 @@ componente toma su lugar. Dos detalles que **no** hay que romper:
 - `/api/revalidate` verifica la firma del webhook antes de invalidar
   nada: la ruta es pública y sin esa comprobación cualquiera podría
   tirar la caché a voluntad.
+
+**Migración del contenido — `npm run seed`**
+
+`scripts/seed-sanity.ts` sube a Sanity el contenido que vive en
+`src/content/defaults.ts`, junto con los assets reales de `public/images/`
+(fondo del Hero, video de 1080p y las 6 fotos de la galería).
+
+```
+npm run seed              # crea lo que falte; no pisa lo existente
+npm run seed -- --force   # sobrescribe los documentos que ya existan
+npm run seed -- --dry-run # muestra el plan sin escribir nada
+```
+
+- Usa un cliente de **escritura** propio (`SANITY_API_TOKEN`, `useCdn:
+  false`), distinto del cliente público de solo lectura del sitio.
+- Es seguro correrlo varias veces: los 6 documentos son singletons con
+  `_id` fijo, así que `createOrReplace` nunca duplica; y sin `--force`
+  ni siquiera toca los que ya existen, para no pisar ediciones hechas en
+  el Studio. Los assets los deduplica Sanity por hash de contenido.
+- **La galería se sube con las 6 fotos reales, sin duplicar.** La
+  duplicación a 12 slides sigue existiendo pero solo como *fallback* del
+  componente (ver `defaultImages` en `Galeria.tsx`), para cuando Sanity
+  no devuelve imágenes.
+
+`src/content/defaults.ts` es la **única fuente de verdad** del contenido
+migrable, y por eso es TypeScript plano sin React ni imports de Next: lo
+consumen tanto los componentes (como fallback) como el script (que corre
+en Node con `tsx`). Si los defaults vivieran dentro de los componentes
+—como defaults de desestructuración— el script no podría leerlos y
+habría que transcribirlos a mano.
+
+> **Ojo al probar en local:** después de correr el seed, un `npm run
+> build` a secas **puede seguir mostrando el contenido viejo**. Las
+> entradas de `fetch` con `force-cache` persisten en `.next/cache` entre
+> builds, así que el build reutiliza la respuesta cacheada de cuando el
+> dataset estaba vacío. Borrar `.next` y reconstruir. En producción esto
+> no aplica: de eso se encarga el webhook con `revalidateTag`.
 
 **Configuración externa pendiente (no es código)**
 

@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { AnimatePresence } from "framer-motion";
 import AnimatedSection from "@/components/AnimatedSection";
+import { heroDefaults } from "@/content/defaults";
 import HeroMobileMenu from "./HeroMobileMenu";
 import VideoLightbox from "./VideoLightbox";
 
@@ -40,18 +41,17 @@ export default function Hero({
   navLinks = defaultNavLinks,
   contactLabel = "Contacto",
   contactHref = "#contacto",
-  titlePrefix = "Un Desarrollo con ",
-  titleHighlight = "Altura",
-  description = "San Francisco es un desarrollo pensado para quienes han elegido un nuevo estándar de vida: privacidad, elegancia y la tranquilidad de saber que llegaste a casa.",
-  ctaLabel = "Ver Recorrido",
-  // Versión web (1080p, ~9.8 MB). El master 4K original (sfvideo.mp4, 98 MB)
-  // se queda fuera del repo — ver "Video del Hero" en CLAUDE.md.
-  videoSrc = "/images/Videos/sfvideo-1080p.mp4",
+  // El contenido migrable sale de src/content/defaults.ts, que es también
+  // lo que sube `npm run seed` a Sanity. `videoSrc` apunta a la versión
+  // web de 1080p (~9.8 MB); el master 4K queda fuera del repo — ver
+  // "Video del Hero" en CLAUDE.md.
+  titlePrefix = heroDefaults.titlePrefix,
+  titleHighlight = heroDefaults.titleHighlight,
+  description = heroDefaults.description,
+  ctaLabel = heroDefaults.ctaLabel,
+  videoSrc = heroDefaults.videoSrc,
   videoTitle = "Recorrido en video del desarrollo San Francisco",
-  backgroundImage = {
-    src: "/images/hero/background.png",
-    alt: "Edificio San Francisco al atardecer",
-  },
+  backgroundImage = heroDefaults.backgroundImage,
 }: HeroProps) {
   const [videoTrigger, setVideoTrigger] = useState<HTMLElement | null>(null);
 

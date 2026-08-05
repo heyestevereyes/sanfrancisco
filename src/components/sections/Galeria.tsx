@@ -6,6 +6,7 @@ import Image from "next/image";
 import { AnimatePresence } from "framer-motion";
 import AnimatedSection from "@/components/AnimatedSection";
 import ChevronIcon from "@/components/icons/ChevronIcon";
+import { galeriaDefaults, galeriaPhotos } from "@/content/defaults";
 import GaleriaLightbox from "./GaleriaLightbox";
 
 export interface GaleriaImage {
@@ -19,48 +20,21 @@ export interface GaleriaProps {
   images?: GaleriaImage[];
 }
 
-// Las 6 fotos reales del departamento que nos dio el cliente
-// (public/images/SFPhotos). Cada una lleva su alt descriptivo real.
-const realPhotos: Omit<GaleriaImage, "id">[] = [
-  {
-    src: "/images/SFPhotos/1sf.png",
-    alt: "Sala y comedor con vista al atardecer desde los ventanales, cocina integrada al fondo",
-  },
-  {
-    src: "/images/SFPhotos/2sf.png",
-    alt: "Sala con televisión y comedor de cristal frente a ventanales con vista al atardecer",
-  },
-  {
-    src: "/images/SFPhotos/3sf.png",
-    alt: "Cocina integral con antecomedor y vista hacia la recámara principal",
-  },
-  {
-    src: "/images/SFPhotos/4sf.png",
-    alt: "Sala-comedor con cómoda, televisión y acceso a las recámaras",
-  },
-  {
-    src: "/images/SFPhotos/5sf.png",
-    alt: "Recámara principal con cama matrimonial y ventana con vista al atardecer",
-  },
-  {
-    src: "/images/SFPhotos/6sf.png",
-    alt: "Recámara secundaria con dos camas individuales y ventana con vista al atardecer",
-  },
-];
-
-// TODO: el cliente solo nos dio estas 6 fotos por ahora, así que
-// duplicamos el set (12 slides en total) para que el carrusel infinito
-// no se sienta repetitivo tan rápido — la segunda pasada usa un orden
-// distinto (no es un espejo del primero) para que la misma foto no
-// vuelva a aparecer "pegada" cerca de donde ya se vio. Los ids son
-// únicos por instancia (aunque el src se repita) para no romper las
-// keys de React; el alt se mantiene igual sin importar cuántas veces
-// se repita la foto. Quitar esta duplicación en cuanto el cliente
-// mande más fotos o se conecte la galería a Sanity.
-const secondPassOrder = [2, 4, 6, 1, 3, 5]; // 1-indexado sobre realPhotos, orden distinto al original
+// El cliente solo nos dio 6 fotos (galeriaPhotos en src/content/defaults.ts,
+// el mismo set que sube `npm run seed` a Sanity **sin duplicar**). Para el
+// **fallback** las duplicamos a 12 slides, para que el carrusel infinito no
+// se sienta repetitivo tan rápido: la segunda pasada va en otro orden (no es
+// un espejo del primero) para que la misma foto no reaparezca pegada a donde
+// ya se vio. Los ids son únicos por instancia aunque el src se repita, para
+// no romper las keys de React; el alt no cambia.
+//
+// Este parche solo aplica cuando Sanity no devuelve imágenes. Con la galería
+// ya cargada en el CMS mandan sus imágenes tal cual, sin duplicación — y ahí
+// la solución de fondo es que el cliente mande más fotos.
+const secondPassOrder = [2, 4, 6, 1, 3, 5]; // 1-indexado sobre galeriaPhotos
 const defaultImages: GaleriaImage[] = [
-  ...realPhotos.map((photo, i) => ({ id: `sf-${i + 1}-a`, ...photo })),
-  ...secondPassOrder.map((n, i) => ({ id: `sf-${n}-b-${i + 1}`, ...realPhotos[n - 1] })),
+  ...galeriaPhotos.map((photo, i) => ({ id: `sf-${i + 1}-a`, ...photo })),
+  ...secondPassOrder.map((n, i) => ({ id: `sf-${n}-b-${i + 1}`, ...galeriaPhotos[n - 1] })),
 ];
 
 /**
@@ -79,7 +53,7 @@ const defaultImages: GaleriaImage[] = [
  * propios (criterio de UX, sin mockup) en las mismas clases responsivas.
  */
 export default function Galeria({
-  title = "Conoce tu departamento",
+  title = galeriaDefaults.title,
   images = defaultImages,
 }: GaleriaProps) {
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, align: "start" });

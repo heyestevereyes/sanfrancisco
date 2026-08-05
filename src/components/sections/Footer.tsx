@@ -2,6 +2,7 @@ import Image from "next/image";
 import AnimatedSection from "@/components/AnimatedSection";
 import ArrowIcon from "@/components/icons/ArrowIcon";
 import InstagramIcon from "@/components/icons/InstagramIcon";
+import { footerDefaults } from "@/content/defaults";
 
 export interface FooterProps {
   logo?: { src: string; alt: string };
@@ -22,18 +23,14 @@ const defaultProps: Required<FooterProps> = {
   // 1:207) en vez de cream — el archivo de Hero está coloreado para su
   // fondo oscuro y sería casi invisible sobre el degradado claro del footer.
   logo: { src: "/images/footer/logo-forest.svg", alt: "Logotipo San Francisco" },
-  tagline: "Vivir en calma es vivir en altura",
   ctaLabel: "Cotizar mi Departamento",
   ctaHref: "#contacto",
-  address: "Miguel Hidalgo 36, Santa Cruz Nieto, 76804 San Juan del Río, Qro",
-  email: "Info@sanfrancisco.com",
-  phone: "+1 (312) 555 0140",
-  hours: "Mon–Fri, 9–6 CT",
   instagramLabel: "Instagram",
-  // PENDIENTE: el cliente todavía no nos da la cuenta real de Instagram —
-  // ver "Pendientes del cliente" en CLAUDE.md.
-  instagramHref: "https://www.instagram.com/PENDIENTE_USUARIO_INSTAGRAM/",
-  copyrightName: "SAN FRANCISCO CONDOMINIO",
+  // El resto sale de src/content/defaults.ts, compartido con `npm run seed`.
+  // Ojo: `instagramHref` sigue siendo el placeholder PENDIENTE_ y
+  // email/phone/hours vienen del mockup, no están confirmados por el
+  // cliente — ver "Pendientes del cliente" en CLAUDE.md.
+  ...footerDefaults,
 };
 
 /**

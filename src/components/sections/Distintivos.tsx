@@ -2,6 +2,7 @@ import Image from "next/image";
 import AnimatedSection from "@/components/AnimatedSection";
 import CrestIcon from "@/components/icons/CrestIcon";
 import ArrowIcon from "@/components/icons/ArrowIcon";
+import { distintivosDefaults } from "@/content/defaults";
 
 export interface DistintivosProps {
   flowerIcon?: { src: string; alt: string };
@@ -14,15 +15,11 @@ export interface DistintivosProps {
 }
 
 const defaultProps: Required<DistintivosProps> = {
+  // Decorativo (`alt=""`) y ancla interna: no se editan desde el CMS.
   flowerIcon: { src: "/images/distintivos/flower.svg", alt: "" },
-  tagline: "El verdadero lujo no se anuncia,\nse habita",
-  galleryLabel: "Ver la galería",
   galleryHref: "#galeria",
-  title: "Lo que nos distingue",
-  description:
-    "San Francisco nace de una idea simple: el verdadero lujo no se anuncia, se habita. Cada espacio fue diseñado para que la vida fluya con la misma serenidad con la que un ave surca el cielo — sin prisa, sin ruido, con total dominio del entorno.\n\nNo construimos solo departamentos. Creamos un ecosistema de bienestar donde la arquitectura, la naturaleza y el diseño conviven en equilibrio. Cada detalle responde a una pregunta: ¿esto suma a la calma de quien vive aquí?",
-  locationNote:
-    "Ubicación privilegiada, pensada para la conectividad sin perder privacidad",
+  // El resto sale de src/content/defaults.ts, compartido con `npm run seed`.
+  ...distintivosDefaults,
 };
 
 export default function Distintivos(props: DistintivosProps) {
